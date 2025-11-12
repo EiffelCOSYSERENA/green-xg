@@ -1,0 +1,63 @@
+replicaCount: 1
+
+image:
+  repository: tidiosky/oai-flexric
+  tag: latest
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "xapp-kpm-moni"
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: false
+
+resources: {}
+
+config:
+  ricHost: "oai-ric"
+  duHost: "oai-ran"
+  du1Host: "oai-ran1"
+  du2Host: "oai-ran2"
+
+# Environment variables
+env:
+  XAPP_DURATION: "-1"
+
+# Command and args
+command:
+  - "stdbuf"
+  - "-o0"
+  - "/usr/local/flexric/xApp/c/monitor/xapp_kpm_moni"
+  - "-d"
+  - "/flexric/"
+  - "-n"
+  - "xapp_db"
+
+# NFS Volume configuration
+nfs:
+  server: "192.168.18.98"
+  path: "/volume1/platform/green-xg/flexric/flexric"
+
+# ConfigMap files
+configFiles:
+  flexric:
+    conf: |-
+      [NEAR-RIC]
+      NEAR_RIC_IP = @RIC_IP_ADDRESS@
+      [XAPP]
+      DB_DIR = /flexric/
+      DB_NAME = kpm_moni.db

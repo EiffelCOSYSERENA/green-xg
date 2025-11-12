@@ -1,0 +1,48 @@
+replicaCount: 1
+
+image:
+  repository: oaisoftwarealliance/oai-flexric
+  tag: develop
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: false
+
+resources: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Environment variables
+env:
+  XAPP_DURATION: "-1"
+
+# ConfigMap files
+configFiles:
+  flexric.conf: |
+configFiles:
+  flexric:
+    conf: |-
+      [NEAR-RIC]
+      NEAR_RIC_IP = @RIC_IP_ADDRESS@
+      [XAPP]
+      DB_DIR = /flexric/db/
+      DB_NAME = xapp_rc_moni_db.db

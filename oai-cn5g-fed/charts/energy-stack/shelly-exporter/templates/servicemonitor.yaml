@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "shelly-exporter.fullname" . }}
+  labels:
+    {{- include "shelly-exporter.labels" . | nindent 4 }}
+    release: {{ .Values.prometheus.releaseLabel }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "shelly-exporter.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: http
+      interval: {{ .Values.prometheus.scrapeInterval }}
+      path: /metrics

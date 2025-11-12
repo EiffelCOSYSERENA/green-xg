@@ -1,0 +1,18 @@
+apiVersion: v2
+appVersion: develop
+description: A Helm chart for du network function
+icon: http://www.openairinterface.org/wp-content/uploads/2015/06/cropped-oai_final_logo.png
+keywords:
+- RF Simulator
+- gNB
+- RAN
+- 5G
+- DU
+maintainers:
+- email: contact@openairinterface.org
+  name: OPENAIRINTERFACE
+name: oai-du
+sources:
+- https://gitlab.eurecom.fr/oai/openairinterface5g
+type: application
+version: 2.1.0

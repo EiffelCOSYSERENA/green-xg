@@ -1,0 +1,35 @@
+1. Create Host Directories : 
+(common step to 5G net deploy). This step must be runned on the worker node.
+# On each worker node where Prometheus/Grafana might run:
+sudo mkdir -p /mnt/prometheus
+sudo mkdir -p /mnt/grafana
+sudo chown -R 1000:1000 /mnt/prometheus /mnt/grafana  # Set proper ownership
+
+2. Create PersistentVolumes : 
+Create a custom resource description file for persistent storage, here persistentVolumes.yaml
+
+kubectl apply -f persistentVolumes.yaml
+
+4. Install kube-prometheus-stack:
+Create a custom value file values.yaml
+cd ~/oai-cn5g-fed/charts/prometheus
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+helm install prometheus-stack prometheus-community/kube-prometheus-stack \
+  -n monitoring --create-namespace \
+  -f values.yaml
+
+5. Install kepler :
+
+Create a custom values.yaml for kepler, then run :
+
+helm repo add kepler https://sustainable-computing-io.github.io/kepler-helm-chart
+helm repo update
+helm install kepler kepler/kepler \
+  -n kepler --create-namespace \
+  -f kepler-values.yaml
+
+
+
+helm install kepler \
+  https://github.com/sustainable-computing-io/kepler/releases/download/v0.10.2/kepler-helm-0.10.2.tgz --namespace green-xg

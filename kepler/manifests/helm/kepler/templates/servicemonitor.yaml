@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kepler-servicemonitor
+  namespace: kepler
+  labels:
+    release: prometheus-stack  # This must match Prometheus' serviceMonitorSelector
+spec:
+  endpoints:
+    - port: metrics  # Changed from 'metrics' to 'http' to match your Service port name
+      interval: 5s
+  namespaceSelector:
+    matchNames:
+      - kepler
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kepler  # Matches your Service labels
+      app.kubernetes.io/instance: kepler  # Also include this selector

@@ -1,0 +1,15 @@
+# kepler-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kepler-service
+  namespace: kepler  # Replace with your Kepler namespace if different
+  labels:
+    app.kubernetes.io/name: kepler
+spec:
+  selector:
+    app.kubernetes.io/name: kepler  # Match your Kepler deployment labels
+  ports:
+    - name: metrics
+      port: 28282
+      targetPort: 28282

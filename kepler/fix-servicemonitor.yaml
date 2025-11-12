@@ -1,0 +1,18 @@
+# kepler-servicemonitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kepler-servicemonitor
+  namespace: kepler  # Same as Kepler namespace
+  labels:
+    release: prometheus-stack  # Must match Prometheus' serviceMonitorSelector
+spec:
+  endpoints:
+    - port: metrics  # Matches the Service port name
+      interval: 15s
+  namespaceSelector:
+    matchNames:
+      - kepler  # Namespace where Kepler Service exists
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kepler  # Matches the Kepler Service labels

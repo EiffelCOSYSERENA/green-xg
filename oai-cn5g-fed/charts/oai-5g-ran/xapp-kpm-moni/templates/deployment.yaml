@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "xapp-kpm-moni.fullname" . }}
+  labels:
+    {{- include "xapp-kpm-moni.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "xapp-kpm-moni.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "xapp-kpm-moni.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "xapp-kpm-moni.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      # initContainers:
+      #   - name: init
+      #     image: docker.io/oaisoftwarealliance/oai-tcpdump-init:alpine-3.20
+      #     imagePullPolicy: IfNotPresent
+      #     command:
+      #       - /bin/sh
+      #       - -c
+      #       - until ncat -zv {{ .Values.config.duHost }} 8080 --http ; do echo waiting for du sleep 1; done
+      #     resources:
+      #       requests:
+      #         memory: 50Mi
+      #         cpu: 1m
+      #       limits:
+      #         memory: 50Mi
+      #         cpu: 1m
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: [ "/bin/bash", "-c" ]
+          args: 
+           -  CU_IP_ADDRESS=$(getent hosts $CU_HOST | awk '{print $1}');
+              RIC_IP_ADDRESS=$(getent hosts $RIC_HOST | awk '{print $1}');
+              RIC_IP_ADDRESS=$(if [[ $RIC_IP_ADDRESS ]]; then echo $RIC_IP_ADDRESS; else echo $RIC_HOST;fi)
+              sed -e s/@RIC_IP_ADDRESS@/$RIC_IP_ADDRESS/g
+              /usr/local/etc/flexric/flexric.conf | tee /tmp/flexric.conf;
+              stdbuf -o0 /usr/local/flexric/xApp/c/monitor/xapp_kpm_moni -c /tmp/flexric.conf;
+          env:
+          - name: XAPP_DURATION
+            value: {{ .Values.env.XAPP_DURATION | quote }}
+          - name: RIC_HOST
+            value: {{ .Values.config.ricHost }}
+          volumeMounts:
+          - name: flexric-config
+            mountPath: /usr/local/etc/flexric/flexric.conf
+            subPath: flexric.conf
+          - name: flexric-storage
+            mountPath: /flexric
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: flexric-config
+        configMap:
+          name: {{ include "xapp-kpm-moni.fullname" . }}-config
+          items:
+          - key: flexric.conf
+            path: flexric.conf
+      - name: flexric-storage
+        persistentVolumeClaim:
+          claimName: flexric-pvc
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

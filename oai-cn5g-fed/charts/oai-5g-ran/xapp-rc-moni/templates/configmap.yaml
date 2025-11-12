@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "xapp-rc-moni.fullname" . }}-config
+  labels:
+    {{- include "xapp-rc-moni.labels" . | nindent 4 }}
+data:
+  flexric.conf: |
+{{ .Values.configFiles.flexric.conf | indent 4 }}

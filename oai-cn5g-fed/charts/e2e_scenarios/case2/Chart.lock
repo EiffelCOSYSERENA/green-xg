@@ -1,0 +1,45 @@
+dependencies:
+- name: mysql
+  repository: file://../../oai-5g-core/mysql
+  version: 9.0.1
+- name: oai-nrf
+  repository: file://../../oai-5g-core/oai-nrf
+  version: v2.1.0
+- name: oai-udr
+  repository: file://../../oai-5g-core/oai-udr
+  version: v2.1.0
+- name: oai-udm
+  repository: file://../../oai-5g-core/oai-udm
+  version: v2.1.0
+- name: oai-ausf
+  repository: file://../../oai-5g-core/oai-ausf
+  version: v2.1.0
+- name: oai-amf
+  repository: file://../../oai-5g-core/oai-amf
+  version: v2.1.0
+- name: oai-smf
+  repository: file://../../oai-5g-core/oai-smf
+  version: v2.1.0
+- name: oai-upf
+  repository: file://../../oai-5g-core/oai-upf
+  version: v2.1.0
+- name: oai-cu
+  repository: file://../../oai-5g-ran/oai-cu
+  version: 2.1.0
+- name: oai-du
+  repository: file://../../oai-5g-ran/oai-du
+  version: 2.1.0
+- name: oai-nr-ue
+  repository: file://../../oai-5g-ran/oai-nr-ue
+  version: 2.1.0
+- name: oai-traffic-server
+  repository: file://../../oai-5g-core/oai-traffic-server
+  version: v1
+- name: oai-ric
+  repository: file://../../oai-5g-ran/oai-5g-ric
+  version: 0.1.0
+- name: xapp-kpm-moni
+  repository: file://../../oai-5g-ran/xapp-kpm-moni
+  version: 0.1.0
+digest: sha256:a0083a8d4edc7a5aa9dfb69327b17c79fb3ca70181d73bc2c5115fd4d52588d7
+generated: "2025-09-09T16:16:29.74713731+02:00"

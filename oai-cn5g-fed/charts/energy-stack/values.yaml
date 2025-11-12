@@ -1,0 +1,116 @@
+# values.yaml
+global:
+  storageClass: local-storage
+
+prometheus:
+  prometheusSpec:
+    storageSpec:
+      volumeClaimTemplate:
+        metadata:
+          name: prometheus-pvc
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          storageClassName: local-storage
+          resources:
+            requests:
+              storage: 20Gi
+  # service:
+  #   type: NodePort
+  #   nodePort: 30900
+  
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    kubernetes.io/hostname: platform-worker
+
+grafana:
+  # Configuration de persistence
+  persistence:
+    enabled: true
+    existingClaim: grafana-pvc
+    accessModes:
+      - ReadWriteOnce
+    size: 5Gi
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector:
+    kubernetes.io/hostname: platform-worker
+  # Configuration du service NodePort
+  service:
+    type: NodePort
+    port: 80
+    targetPort: 3000
+    nodePort: 30300
+  
+  plugins:
+    - frser-sqlite-datasource
+  # Configuration des datasources
+  datasources:
+    datasource.yaml:
+      apiVersion: 1
+      datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-stack-kube-prom-prometheus.monitoring.svc.cluster.local:9090
+        access: proxy
+        # isDefault: false
+      - name: Flexric-Db
+        type: frser-sqlite-datasource
+        access: proxy
+        isDefault: true
+        editable: true
+        jsonData:
+          path: /var/lib/grafana/flexric/kpm_moni.db
+
+  # Dashboards personnalisés
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'default'
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards
+
+  dashboardsConfigMaps:
+    default: "grafana-dashboards"
+
+  # # Configuration des volumes supplémentaires
+  # additionalVolumes:
+  #   - name: flexric-storage
+  #     persistentVolumeClaim:
+  #       claimName: flexric-monitoring-pvc
+
+  # additionalVolumeMounts:
+  #   - name: flexric-storage
+  #     mountPath: /flexric
+  #     readOnly: false
+
+  # Configuration ini
+  # grafana.ini:
+  #   paths:
+  #     data: /var/lib/grafana/data
+  #     logs: /var/log/grafana
+  #     plugins: /var/lib/grafana/plugins
+  #     provisioning: /etc/grafana/provisioning
+  #   analytics:
+  #     check_for_updates: true
+  #   log:
+  #     mode: console
+
+alertmanager:
+  enabled: false
+
+kube-state-metrics:
+  enabled: true
+
+node-exporter:
+  enabled: true

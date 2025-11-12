@@ -1,0 +1,42 @@
+# Default values for .helm.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+kubernetesDistribution: Vanilla  
+nfimage:   # image name either locally present or in a public/private repository
+  repository: docker.io/oaisoftwarealliance/oai-flexric       ## dockerhub oaisoftwarealliance/oai-gnb
+  version: grafana # image tag or develop
+  # pullPolicy: IfNotPresent or Never or Always
+  pullPolicy: IfNotPresent
+
+namespace: green-xg
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "oai-ric"
+
+service:
+  name: oai-ric
+#   port: 36421
+#   type: NodePort
+#   node_port: 31234 #must be within range 30000 - 32767
+config:
+  ricHost: oai-ric
+configmap_data:
+  flexric_conf: |-
+    [NEAR-RIC]
+    NEAR_RIC_IP = 0.0.0.0
+    [XAPP]
+    DB_DIR = /tmp/
+
+multus:
+  interface:
+    create: false
+    ipAdd: "192.168.18.200"
+    netmask: "23"
+    name: macvlan-conf
+    gateway: "192.168.18.254"
+    hostInterface: "enp0s31f6"

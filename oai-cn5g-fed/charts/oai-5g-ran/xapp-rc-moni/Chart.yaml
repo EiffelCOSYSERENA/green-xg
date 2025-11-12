@@ -1,0 +1,6 @@
+apiVersion: v2
+name: xapp-rc-moni
+description: A Helm chart for XApp RC Monitor service
+type: application
+version: 0.1.0
+appVersion: "dev"

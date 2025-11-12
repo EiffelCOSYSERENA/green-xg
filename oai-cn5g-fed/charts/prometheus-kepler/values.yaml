@@ -1,0 +1,51 @@
+# values-prometheus-hostpath.yaml
+grafana:
+  enabled: true
+  adminPassword: "admin"  # Change in production
+  persistence:
+    enabled: true
+    storageClassName: "hostpath"
+    accessModes: ["ReadWriteOnce"]
+    size: 5Gi
+  # ingress:
+  #   enabled: true
+  #   annotations:
+  #     kubernetes.io/ingress.class: nginx
+  #   hosts:
+  #     - grafana.local  # Replace with your domain
+  #   tls:
+  #     - secretName: grafana-tls
+  #       hosts:
+  #         - grafana.local
+
+prometheus:
+  prometheusSpec:
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "hostpath"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+  # ingress:
+  #   enabled: true
+  #   annotations:
+  #     kubernetes.io/ingress.class: nginx
+  #     nginx.ingress.kubernetes.io/rewrite-target: /$2
+  #   hosts:
+  #     - prometheus.example.com  # Replace with your domain
+  #   paths:
+  #     - /prometheus(/|$)(.*)
+  #   tls:
+  #     - secretName: prometheus-tls
+  #       hosts:
+  #         - prometheus.example.com
+
+# Enable nodeExporter for host metrics
+nodeExporter:
+  enabled: true
+
+# Enable kubeStateMetrics for cluster metrics
+kubeStateMetrics:
+  enabled: true

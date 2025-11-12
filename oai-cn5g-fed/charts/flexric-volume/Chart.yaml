@@ -1,0 +1,5 @@
+apiVersion: v2
+name: flexric-volume
+description: NFS Persistent Volume for FlexRIC
+type: application
+version: 0.1.0

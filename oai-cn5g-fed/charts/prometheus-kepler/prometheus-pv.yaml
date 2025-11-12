@@ -1,0 +1,23 @@
+# prometheus-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: prometheus-local-pv
+spec:
+  capacity:
+    storage: 20Gi # Adaptez la taille à vos besoins
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /home/k8s-data/prometheus
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - platform-worker # <-- REMPLACEZ CECI

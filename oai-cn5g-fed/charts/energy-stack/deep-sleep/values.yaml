@@ -1,0 +1,538 @@
+# flexric-deep-sleep/values.yaml
+# Default values for flexric-deep-sleep chart
+
+## Global configuration
+global:
+  # Kubernetes namespace
+  namespace: flexric-5g
+  
+  # Image pull secrets for private registries
+  imagePullSecrets: []
+  
+  # Node selectors for pod placement
+  nodeSelector:
+    controlPlane: platform-master
+    ran: platform-worker
+    
+  # Storage class for persistent volumes
+  storageClass: fast-ssd
+
+## FlexRIC Near-RT RIC Configuration
+ric:
+  enabled: true
+  name: flexric-nearrt-ric
+  
+  image:
+    repository: flexric/nearrt-ric
+    tag: latest
+    pullPolicy: IfNotPresent
+  
+  replicaCount: 1
+  
+  service:
+    type: NodePort
+    ports:
+      e2ap:
+        port: 36421
+        nodePort: 30421
+        protocol: SCTP
+      api:
+        port: 8080
+        nodePort: 30080
+      metrics:
+        port: 9090
+        nodePort: 30090
+  
+  resources:
+    limits:
+      cpu: 2
+      memory: 2Gi
+    requests:
+      cpu: 1
+      memory: 1Gi
+  
+  persistence:
+    enabled: true
+    size: 10Gi
+    mountPath: /data
+  
+  config:
+    maxE2Nodes: 10
+    e2Timeout: 60
+    serviceModels:
+      - MAC
+      - KPM
+      - RC
+  
+  nodeSelector:
+    node-role: platform-master
+  
+  tolerations: []
+  affinity: {}
+
+## Deep-Sleep xApp Configuration
+xapp:
+  enabled: true
+  name: xapp-deep-sleep
+  
+  image:
+    repository: flexric/xapp-deep-sleep
+    tag: latest
+    pullPolicy: IfNotPresent
+  
+  replicaCount: 1
+  
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  
+  config:
+    # Deep-sleep parameters
+    pdschThresholdMs: 500
+    energySavingsTarget: 37
+    monitoringPeriodMs: 10
+    harqFailureTolerance: 0
+    
+    # Power management modes
+    powerMode: aggressive  # aggressive, moderate, conservative
+    
+    # Transition times
+    sleepTransitionMs: 5
+    wakeupTimeMs: 10
+    
+    # RU Configuration
+    ruConfig:
+      - id: 0
+        name: USRP_N310_RU0
+        ip: 192.168.30.2
+        enabled: true
+      - id: 1
+        name: USRP_N310_RU1
+        ip: 192.168.20.2
+        enabled: true
+  
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 80
+  
+  nodeSelector:
+    node-role: platform-master
+
+## OpenAirInterface CU-DU Configuration
+oai:
+  cudu:
+    enabled: true
+    name: oai-gnb-cu-du
+    
+    image:
+      repository: oaisoftwarealliance/oai-gnb
+      tag: develop
+      pullPolicy: IfNotPresent
+    
+    replicaCount: 1
+    
+    resources:
+      limits:
+        cpu: 8
+        memory: 8Gi
+        hugepages-1Gi: 4Gi
+      requests:
+        cpu: 4
+        memory: 4Gi
+        hugepages-1Gi: 4Gi
+    
+    config:
+      gnbId: 0xe00
+      gnbName: gNB-DU
+      mcc: "208"
+      mnc: "99"
+      tac: 1
+      sst: 1
+      sd: "0x000000"
+      
+      # Band n78 configuration
+      band: 78
+      bandwidth: 40  # MHz
+      scs: 30  # kHz subcarrier spacing
+      frequency: 3500000000  # Hz
+      
+      # Network configuration
+      amfIp: 192.168.10.10
+      gnbNgIp: 192.168.10.20
+      gnbN3Ip: 192.168.10.20
+      
+      # F1 interface
+      f1:
+        duIp: 192.168.10.30
+        cuIp: 192.168.10.20
+        port: 38472
+      
+      # E2 agent
+      e2Agent:
+        enabled: true
+        ricIp: flexric-nearrt-ric
+        ricPort: 36421
+        reportingPeriodMs: 10
+    
+    hostNetwork: true
+    nodeSelector:
+      node-role: ran
+    
+    securityContext:
+      privileged: true
+      capabilities:
+        add:
+          - NET_ADMIN
+          - SYS_NICE
+          - IPC_LOCK
+
+  ## RU Configuration
+  ru:
+    enabled: true
+    name: oai-ru
+    
+    image:
+      repository: oaisoftwarealliance/oai-ru
+      tag: develop
+      pullPolicy: IfNotPresent
+    
+    # Use DaemonSet for RU deployment
+    deploymentType: DaemonSet
+    
+    resources:
+      limits:
+        cpu: 4
+        memory: 4Gi
+      requests:
+        cpu: 2
+        memory: 2Gi
+    
+    config:
+      - ruId: 0
+        deviceType: USRP
+        deviceSubtype: N310
+        deviceArgs: "type=n3xx,addr=192.168.30.2,master_clock_rate=122.88e6"
+        localIp: 192.168.30.1
+        remoteIp: 192.168.30.2
+        bands: [78]
+        txGain: 70
+        rxGain: 50
+        nbTx: 2
+        nbRx: 2
+        txChainControl:
+          enabled: true
+          initialState: active
+          deepSleepMode: aggressive
+          powerDomains:
+            rfChain: true
+            dspChain: true
+            baseband: false
+          energyProfile:
+            activePowerW: 45
+            sleepPowerW: 28.35
+            transitionEnergyJ: 0.5
+            
+      - ruId: 1
+        deviceType: USRP
+        deviceSubtype: N310
+        deviceArgs: "type=n3xx,addr=192.168.20.2,master_clock_rate=122.88e6"
+        localIp: 192.168.20.1
+        remoteIp: 192.168.20.2
+        bands: [78]
+        txGain: 70
+        rxGain: 50
+        nbTx: 2
+        nbRx: 2
+        txChainControl:
+          enabled: true
+          initialState: active
+          deepSleepMode: aggressive
+          powerDomains:
+            rfChain: true
+            dspChain: true
+            baseband: false
+          energyProfile:
+            activePowerW: 45
+            sleepPowerW: 28.35
+            transitionEnergyJ: 0.5
+    
+    hostNetwork: true
+    nodeSelector:
+      node-role: ru
+    
+    securityContext:
+      privileged: true
+      capabilities:
+        add:
+          - NET_ADMIN
+          - SYS_NICE
+          - IPC_LOCK
+          - SYS_RAWIO
+
+## Monitoring Configuration
+monitoring:
+  enabled: true
+  
+  prometheus:
+    enabled: true
+    retention: 30d
+    storageSize: 50Gi
+    
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      scrapeTimeout: 10s
+    
+    rules:
+      enabled: true
+      # Alert rules for energy efficiency
+      alerts:
+        - name: LowEnergySavings
+          expr: energy_savings_percentage < 30
+          for: 5m
+          annotations:
+            summary: "Energy savings below target"
+            description: "Energy savings {{ $value }}% is below 30% target"
+        
+        - name: HighWakeupLatency
+          expr: ru_wakeup_latency_ms > 20
+          for: 2m
+          annotations:
+            summary: "High RU wake-up latency"
+            description: "RU wake-up latency {{ $value }}ms exceeds 20ms threshold"
+  
+  grafana:
+    enabled: true
+    adminPassword: admin
+    
+    dashboards:
+      enabled: true
+      defaultDashboard: energy-monitoring
+    
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus:9090
+        isDefault: true
+  
+  # Custom energy monitoring dashboard
+  energyDashboard:
+    enabled: true
+    refreshInterval: 5s
+    
+    panels:
+      - ruStates
+      - powerConsumption
+      - energySavings
+      - pdschActivity
+      - statistics
+      - costSavings
+
+## Health Monitoring
+healthMonitor:
+  enabled: true
+  
+  image:
+    repository: flexric/health-monitor
+    tag: latest
+    pullPolicy: IfNotPresent
+  
+  checkInterval: 30  # seconds
+  
+  autoRecovery:
+    enabled: true
+    maxRestarts: 3
+    backoffSeconds: 60
+  
+  alerts:
+    enabled: false
+    email:
+      enabled: false
+      smtp:
+        server: smtp.gmail.com
+        port: 587
+        from: health-monitor@flexric.local
+        to: []
+        username: ""
+        password: ""
+    
+    slack:
+      enabled: false
+      webhookUrl: ""
+      channel: "#alerts"
+  
+  thresholds:
+    cpuPercent: 80
+    memoryPercent: 85
+    restartCount: 5
+    errorRate: 0.05
+    sleepEfficiency: 30
+
+## Testing Configuration
+testing:
+  enabled: false
+  
+  scenarios:
+    - name: basic
+      duration: 120
+      idlePeriod: 60
+      trafficPeriod: 30
+    
+    - name: stress
+      iterations: 10
+      transitionInterval: 5
+    
+    - name: energy
+      measurementDuration: 60
+      targetSavings: 37
+    
+    - name: latency
+      maxLatencyMs: 20
+      samples: 100
+
+## Network Configuration
+network:
+  management:
+    subnet: 192.168.10.0/24
+    
+  fronthaul:
+    ru0:
+      subnet: 192.168.30.0/24
+      vlan: 100
+    ru1:
+      subnet: 192.168.20.0/24
+      vlan: 101
+  
+  serviceMesh:
+    enabled: false
+    istio:
+      enabled: false
+      mtls: true
+
+## Security Configuration
+security:
+  podSecurityPolicy:
+    enabled: false
+  
+  networkPolicy:
+    enabled: true
+    allowedNamespaces:
+      - flexric-5g
+      - kube-system
+  
+  rbac:
+    enabled: true
+    create: true
+  
+  serviceAccount:
+    create: true
+    name: flexric-sa
+
+## Backup Configuration
+backup:
+  enabled: false
+  
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention: 7  # days
+  
+  s3:
+    enabled: false
+    bucket: flexric-backups
+    region: us-west-2
+    accessKey: ""
+    secretKey: ""
+  
+  local:
+    enabled: true
+    path: /backup
+
+## Performance Tuning
+performance:
+  cpuManager:
+    enabled: true
+    policy: static
+    
+  numa:
+    enabled: true
+    node: 0
+  
+  hugepages:
+    enabled: true
+    size: 1Gi
+    count: 4
+  
+  irqAffinity:
+    enabled: true
+    cpuList: "2-7"
+
+## Logging Configuration
+logging:
+  level: info  # debug, info, warning, error
+  
+  outputs:
+    - stdout
+    - file
+  
+  file:
+    path: /var/log/flexric
+    maxSize: 100M
+    maxBackups: 5
+    maxAge: 30
+  
+  components:
+    ric: info
+    xapp: debug
+    du: info
+    ru: info
+    e2agent: debug
+    health: info
+
+## PostgreSQL Configuration (for metrics storage)
+postgresql:
+  enabled: false
+  
+  auth:
+    database: flexric_metrics
+    username: flexric
+    password: changeme
+  
+  primary:
+    persistence:
+      size: 20Gi
+  
+  metrics:
+    enabled: true
+
+## External Services
+external:
+  amf:
+    enabled: true
+    address: 192.168.10.10
+    port: 38412
+  
+  influxdb:
+    enabled: false
+    url: http://influxdb:8086
+    database: flexric
+    username: ""
+    password: ""
+
+## Feature Flags
+features:
+  deepSleep:
+    enabled: true
+    experimental: false
+  
+  mlPrediction:
+    enabled: false
+    modelPath: /models/traffic-prediction
+  
+  dynamicThresholds:
+    enabled: false
+    learningRate: 0.1

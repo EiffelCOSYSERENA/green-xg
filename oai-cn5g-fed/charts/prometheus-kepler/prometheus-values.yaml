@@ -1,0 +1,21 @@
+# prometheus-values.yaml - Version complète et corrigée
+
+# 1. On désactive Grafana car vous avez le vôtre
+grafana:
+  enabled: false
+
+# 2. On désactive explicitement Alertmanager pour éviter tout problème
+alertmanager:
+  enabled: false
+
+# 3. On configure la persistance pour Prometheus, comme vous l'aviez fait
+prometheus:
+  prometheusSpec:
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "local-storage"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi

@@ -1,0 +1,202 @@
+# custom-values.yaml
+
+# Prometheus configuration
+alertmanager:
+  enabled: true
+prometheus:
+  enabled: true
+  service:
+    type: NodePort
+    nodePort: 30900
+    port: 9090
+    targetPort: 9090
+  
+  prometheusSpec:
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: nfs
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi    
+          selector:
+            matchLabels:
+              volumeIdentifier: nfs-pv-prometheus       
+    retention: 30d          
+  server:
+    persistentVolume:
+      existingClaim: "nfs-pvc-prometheus"
+      storageClass: ""
+      accessModes: ["ReadWriteOnce"]
+      size: 20Gi
+    resources:
+      requests:
+        memory: 4096Mi
+        cpu: 1000m
+      limits:
+        memory: 4096Mi
+        cpu: 1000m
+  config:
+    global:
+      scrape_interval: 5s
+      evaluation_interval: 15s
+
+  
+# Grafana configuration
+grafana:
+
+  #Enable persistence
+  enabled: true
+  # persistence:
+  #   enabled: true
+  #   volumeName: nfs-pvc-grafana
+  #   storageClassName: nfs
+  #   accessModes: 
+  #     - ReadWriteOnce
+  #   size: 10Gi
+    
+  extraVolumes:
+    - name: flexric-data
+      persistentVolumeClaim:
+        claimName: nfs-pvc-flexric
+  
+  extraVolumeMounts:
+    - name: flexric-data
+      mountPath: /flexric/
+
+  # Use host network
+  hostNetwork: true
+  
+  # Set service type to NodePort for external access
+  service:
+    type: NodePort
+    nodePort: 30000
+    port: 3000
+    targetPort: 3000
+
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 16Gi
+
+  # Preconfigured data sources
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-server.monitoring.svc.cluster.local
+        access: proxy
+        isDefault: true
+        editable: true
+      datasources:
+      - name: SQLite
+        type: frser-sqlite-datasource 
+        access: proxy
+        url: ''
+        isDefault: false
+        jsonData:
+          path: /flexric/xapp_db
+
+  # Preconfigured dashboards
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+      - name: 'default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/
+      # - name: 'kepler power monitoring'
+      #   orgId: 1
+      #   folder: ''
+      #   type: file
+      #   disableDeletion: false
+      #   editable: true
+      #   options:
+      #     path: /var/lib/grafana/dashboards/kepler-dashboard.json
+      # - name: 'kpm monitoring'
+      #   orgId: 1
+      #   folder: ''
+      #   type: file
+      #   disableDeletion: false
+      #   editable: true
+      #   options:
+      #     path: /var/lib/grafana/dashboards/kpm-moni-dashboard.json
+      # - name: 'node power monitoring'
+      #   orgId: 1
+      #   folder: ''
+      #   type: file
+      #   disableDeletion: false
+      #   editable: true
+      #   options:
+      #     path: /var/lib/grafana/dashboards/node-dashboard.json
+  # Dashboards to import
+  # dashboards:
+  #   default:
+  #     # Example dashboard - replace with your own
+  #     kepler-dashboard:
+  #       gnetId: 2
+  #       revision: 2
+  #       datasource: prometheus
+  #     node-dashboard:
+  #       gnetId: 1860
+  #       revision: 22
+  #       datasource: prometheus
+  #     power-source-comparison:
+  #       gnetId: 2860
+  #       revision: 1
+  #       datasource: prometheus
+  #     kpm-moni-dashboard:
+  #       gnetId: 3860
+  #       revision: 1
+  #       datasource: SQLite
+
+  # Additional plugins (SQLite in this case)
+  #  
+  # Additional environment variables
+  env:
+    TZ: "Europe/Paris"
+    GF_INSTALL_PLUGINS: "frser-sqlite-datasource"
+    GF_DASHBOARDS_MIN_REFRESH_INTERVAL: "5s"
+
+  volumeMounts:
+  - name: grafana-persistent-storage-store
+    mountPath: /var/lib/grafana/
+  - name: flexric-persistent-storage-store
+    mountPath: /flexric/
+
+  volumes:    
+    - name: grafana-persistent-storage-store
+      persistentVolumeClaim:
+        claimName: nfs-pvc-grafana
+    - name: flexric-persistent-storage-store
+      persistentVolumeClaim:
+        claimName: nfs-pvc-flexric
+
+
+# Alertmanager configuration (if needed)
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          storageClassName: nfs
+          resources:
+            requests:
+              storage: 5Gi
+
+# Node exporter configuration
+nodeExporter:
+  enabled: true
+
+# Kube-state-metrics configuration
+kubeStateMetrics:
+  enabled: true

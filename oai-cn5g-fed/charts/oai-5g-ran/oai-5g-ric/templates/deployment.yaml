@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.service.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "oai-flexric.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "oai-flexric.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "oai-flexric.selectorLabels" . | nindent 8 }}
+     
+      annotations:
+        k8s.v1.cni.cncf.io/networks: {{ .Values.multus.interface.name }}        
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Values.service.name }}
+      restartPolicy: Always
+      dnsPolicy: ClusterFirst
+      securityContext: 
+        runAsUser: 0
+        runAsGroup: 0
+      schedulerName: default-scheduler
+      containers:
+        - name: {{ .Values.service.name }}
+          securityContext:
+            privileged: false
+            capabilities:
+              add: ["NET_ADMIN", "NET_RAW"]
+          image: "{{ .Values.nfimage.repository }}:{{ .Values.nfimage.version }}"
+          imagePullPolicy: Always
+          resources: {}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /usr/local/etc/flexric/flexric.conf
+              subPath: flexric_conf          

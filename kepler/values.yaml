@@ -1,0 +1,25 @@
+# values.yaml
+image:
+  repository: quay.io/sustainable_computing_io/kepler
+  tag: "release-0.9"
+  # tag: "v0.10.0"
+  pullPolicy: IfNotPresent
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 400Mi
+  requests:
+    cpu: 100m
+    memory: 200Mi
+
+tolerations:
+  - operator: Exists
+
+nodeSelector:
+  kubernetes.io/os: linux
+
+# Enable ServiceMonitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 1s

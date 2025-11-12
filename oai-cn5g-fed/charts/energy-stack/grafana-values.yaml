@@ -1,0 +1,51 @@
+persistence:
+  enabled: true
+  storageClassName: local-storage
+  size: 10Gi
+
+extraVolumeMounts:
+  - name: flexric-data
+    mountPath: /flexric
+extraVolumes:
+  - name: flexric-data
+    hostPath:
+      path: /home/k8s-data/flexric
+
+plugins:
+  - frser-sqlite-datasource
+
+service:
+  type: NodePort
+  nodePort: 30000
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-server.monitoring.svc.cluster.local
+        access: proxy
+        isDefault: true
+      - name: SQLite
+        type: frser-sqlite-datasource
+        access: proxy
+        jsonData:
+          path: /flexric/xapp_db
+
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: 'default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards
+
+dashboardsConfigMaps:
+  default: "grafana-dashboards"
+

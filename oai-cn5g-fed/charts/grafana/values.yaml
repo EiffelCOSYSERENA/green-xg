@@ -1,0 +1,95 @@
+replicaCount: 1
+
+image:
+  repository: grafana/grafana
+  tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "grafana"
+
+podSecurityContext:
+  fsGroup: 472
+  runAsUser: 472
+  runAsGroup: 472
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 472
+
+service:
+  name: grafana
+  type: ClusterIP
+  port: 3000
+  targetPort: 3000
+  # nodePort: 30000
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: grafana.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Environment variables
+env:
+  TZ: "Europe/Paris"
+  GF_INSTALL_PLUGINS: "frser-sqlite-datasource"
+  GF_DASHBOARDS_MIN_REFRESH_INTERVAL: "1s"
+
+# NFS Volume configuration
+nfs1:
+  server: "192.168.18.98"
+  path: "/volume1/platform/green-xg/flexric/"
+
+# ConfigMap files
+configFiles:
+  datasource: |-
+    apiVersion: 1
+    datasources:
+      - name: SQLite
+        type: frser-sqlite-datasource 
+        access: proxy
+        url: ''
+        isDefault: true
+        jsonData:
+          path: /var/lib/grafana/xapp_db
+
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: grafana-datasources
+      namespace: green-xg
+      labels:
+        grafana_datasource: "1"
+    data:
+      prometheus-datasource.yaml: |
+        apiVersion: 1
+        datasources:
+        - name: Prometheus
+          type: prometheus
+          access: proxy
+          url: http://prometheus-kube-prometheus-prometheus.green-xg.svc.cluster.local:9090
+          isDefault: true
+
+  dashboard: |-
+    apiVersion: 1
+    providers:
+      - name: 'default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 10
+        allowUiUpdates: false
+        options:
+          path: /var/lib/grafana/dashboards

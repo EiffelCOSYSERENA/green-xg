@@ -1,0 +1,30 @@
+# flexric-deep-sleep/Chart.yaml
+apiVersion: v2
+name: flexric-deep-sleep
+description: FlexRIC Deep-Sleep xApp for 5G RU Energy Management
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - 5g
+  - flexric
+  - energy-management
+  - oran
+  - xapp
+home: https://github.com/flexric/deep-sleep-xapp
+maintainers:
+  - name: FlexRIC Team
+    email: support@flexric.org
+dependencies:
+  - name: postgresql
+    version: 12.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: prometheus
+    version: 19.x.x
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: monitoring.prometheus.enabled
+  - name: grafana
+    version: 6.x.x
+    repository: https://grafana.github.io/helm-charts
+    condition: monitoring.grafana.enabled

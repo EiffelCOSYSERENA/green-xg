@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "oai-flexric.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 36421
+      protocol: SCTP
+      name: sctp-1
+      targetPort: 36421
+    - port: 36422
+      protocol: SCTP
+      name: sctp-2
+      targetPort: 36422
+  selector:
+      {{- include "oai-flexric.selectorLabels" . | nindent 4 }}

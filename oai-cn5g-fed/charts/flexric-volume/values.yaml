@@ -1,0 +1,4 @@
+nfs:
+  server: 192.168.18.98
+  path: /volume1/platform/green-xg/flexric
+storage: 10Gi

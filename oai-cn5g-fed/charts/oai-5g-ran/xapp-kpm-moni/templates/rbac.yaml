@@ -1,0 +1,27 @@
+{{- if .Values.serviceAccount.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "xapp-kpm-moni.fullname" . }}
+  labels:
+    {{- include "xapp-kpm-moni.labels" . | nindent 4 }}
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "xapp-kpm-moni.fullname" . }}
+  labels:
+    {{- include "xapp-kpm-moni.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "xapp-kpm-moni.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "xapp-kpm-moni.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

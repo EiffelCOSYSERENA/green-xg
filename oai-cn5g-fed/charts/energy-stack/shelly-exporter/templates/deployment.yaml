@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "shelly-exporter.fullname" . }}
+  labels:
+    {{- include "shelly-exporter.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "shelly-exporter.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "shelly-exporter.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: shelly-exporter
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          env:
+            - name: SHELLY_DEVICES
+              value: "{{- range $i, $dev := .Values.shelly.devices -}}{{ if $i }},{{ end }}{{ $dev.name }}:{{ $dev.ip }}{{- end }}"

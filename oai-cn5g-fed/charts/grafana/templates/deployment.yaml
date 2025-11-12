@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "grafana.fullname" . }}
+  labels:
+    {{- include "grafana.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "grafana.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "grafana.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "grafana.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: TZ
+            value: {{ .Values.env.TZ }}
+          - name: GF_INSTALL_PLUGINS
+            value: {{ .Values.env.GF_INSTALL_PLUGINS }}
+          - name: GF_DASHBOARDS_MIN_REFRESH_INTERVAL
+            value: {{ .Values.env.GF_DASHBOARDS_MIN_REFRESH_INTERVAL }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+          - name: config-datasource
+            mountPath: /etc/grafana/provisioning/datasources/datasource.yml
+            subPath: datasource.yml
+          - name: config-dashboard
+            mountPath: /etc/grafana/provisioning/dashboards/dashboard.yml
+            subPath: dashboard.yml
+          - name: config-dashboard-json
+            mountPath: /var/lib/grafana/dashboards/dashboard.json
+            subPath: grafana-dashboard.json
+          - name: grafana-storage
+            mountPath: /var/lib/grafana
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: config-datasource
+        configMap:
+          name: {{ include "grafana.fullname" . }}-config
+          items:
+          - key: datasource
+            path: datasource.yml
+      - name: config-dashboard
+        configMap:
+          name: {{ include "grafana.fullname" . }}-config
+          items:
+          - key: dashboard
+            path: dashboard.yml
+      - name: config-dashboard-json
+        configMap:
+          name: {{ include "grafana.fullname" . }}-config
+          items:
+          - key: grafana-dashboard
+            path: grafana-dashboard.json
+      - name: grafana-storage
+        persistentVolumeClaim:
+          claimName: {{ include "grafana.fullname" . }}-nfs-pvc
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
