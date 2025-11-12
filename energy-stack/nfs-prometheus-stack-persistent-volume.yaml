@@ -1,0 +1,87 @@
+# nfs-pv-pvc.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-pv-prometheus
+  labels:
+    volumeIdentifier: nfs-pv-prometheus
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs
+  nfs:
+    server: 192.168.18.98
+    path: "/volume1/platform/green-xg/prometheus/"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-pvc-prometheus
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs
+  resources:
+    requests:
+      storage: 20Gi
+  
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-pv-grafana
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs
+  nfs:
+    server: 192.168.18.98
+    path: "/volume1/platform/green-xg/grafana/"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-pvc-grafana
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-pv-flexric
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOncePod
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs
+  nfs:
+    server: 192.168.18.98
+    path: "/volume1/platform/green-xg/flexric/"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-pvc-flexric
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs
+  resources:
+    requests:
+      storage: 1Gi

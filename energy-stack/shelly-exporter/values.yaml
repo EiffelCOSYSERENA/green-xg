@@ -1,0 +1,60 @@
+# Nombre de réplicas
+replicaCount: 1
+
+# Configuration de l'image
+image:
+  repository: tidiosky/shelly-exporter
+  tag: latest
+  pullPolicy: Always
+
+# Configuration des Shelly devices
+shelly:
+  devices:
+    - name: shelly1
+      ip: "192.168.18.126"
+    - name: shelly2
+      ip: "192.168.18.127"
+
+# Configuration du service
+service:
+  port: 9100
+  targetPort: 9100
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: "shelly-exporter"
+
+# Configuration Prometheus
+prometheus:
+  enabled: true
+  scrapeInterval: 1s
+  releaseLabel: prometheus-stack
+
+# Ressources (optionnel)
+resources:
+  limits:
+    cpu: 1500m
+    memory: 2048Mi
+  requests:
+    cpu: 1000m
+    memory: 1024Mi
+
+# Permet de surcharger le nom du chart
+nameOverride: ""
+fullnameOverride: ""
+
+# Annotations pour les pods (optionnel)
+podAnnotations: {}
+
+# Security context (optionnel)
+securityContext: {}
+
+# Node selector (optionnel)
+nodeSelector: {}
+
+# Tolerations (optionnel)
+tolerations: []
+
+# Affinity (optionnel)
+affinity: {}

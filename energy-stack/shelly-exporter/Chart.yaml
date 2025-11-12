@@ -1,0 +1,5 @@
+apiVersion: v2
+name: shelly-exporter
+description: Helm chart pour déployer un Shelly PlugS3 Prometheus exporter
+type: application
+version: 0.1.0
